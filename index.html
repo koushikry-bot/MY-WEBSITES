@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>লীনাক্স বেসিক কমান্ড স্টাডি গাইড</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', sans-serif;
+            background-color: #F8F5F2; /* Warm neutral background */
+            color: #333333;
+        }
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 400px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 300px; 
+            max-height: 400px; 
+        }
+        @media (min-width: 768px) { 
+            .chart-container { height: 350px; } 
+        }
+        .terminal-bg {
+            background-color: #1E1E1E;
+            color: #4AF626;
+            font-family: monospace;
+        }
+        .tab-btn.active {
+            background-color: #4A5568;
+            color: white;
+            border-color: #4A5568;
+        }
+        .reveal-ans {
+            display: none;
+        }
+        .reveal-ans.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals & Slate (Background: #F8F5F2, Text: #333333, Accents: #4A5568, Terminal: #1E1E1E & #4AF626) -->
+    <!-- Application Structure Plan: The SPA is structured as an interactive educational dashboard. It features a sidebar navigation (top-nav on mobile) to switch between logical modules: 1. Overview (Intro & Chart), 2. Command Explorer (Interactive dictionary with a simulated terminal for examples), 3. Permissions (Visual breakdown of chmod), and 4. Quiz (Interactive flashcards). This structure breaks down the heavy text report into digestible, engaging chunks, prioritizing exploration and active learning over passive reading. -->
+    <!-- Visualization & Content Choices: 
+         1. Overview Chart: Donut chart (Chart.js) -> Shows distribution of command types. Goal: Inform/Organize. Justification: Gives students a visual summary of the syllabus scope.
+         2. Command Explorer: Clickable list + Simulated Terminal -> Goal: Inform/Interactive. Justification: Simulates the actual Linux environment, making it more engaging than a static table.
+         3. Permissions: Grid-based visual representation of User/Group/Others -> Goal: Explain concept. Justification: Breaks down the abstract concept of rwx into tangible blocks.
+         4. Flashcards: Toggle visibility -> Goal: Active Recall. Justification: Better for exam preparation than just reading Q&As. 
+         Library/Method: Tailwind for layout, Vanilla JS for logic, Chart.js for visualization. Confirming NO SVG/Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased min-h-screen flex flex-col md:flex-row">
+
+    <nav class="w-full md:w-64 bg-white shadow-lg md:h-screen sticky top-0 flex flex-col z-10">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800 leading-tight">লীনাক্স বেসিক কমান্ড</h1>
+            <p class="text-sm text-gray-500 mt-2">একাদশ শ্রেণী (Class XI)</p>
+        </div>
+        <div class="flex flex-row md:flex-col overflow-x-auto md:overflow-visible p-4 gap-2 flex-grow">
+            <button onclick="navigate('overview')" id="btn-overview" class="tab-btn active text-left px-4 py-3 rounded-lg font-semibold transition whitespace-nowrap md:whitespace-normal border border-gray-200 hover:bg-gray-100 text-gray-700">📊 সাধারণ ধারণা</button>
+            <button onclick="navigate('explorer')" id="btn-explorer" class="tab-btn text-left px-4 py-3 rounded-lg font-semibold transition whitespace-nowrap md:whitespace-normal border border-gray-200 hover:bg-gray-100 text-gray-700">💻 কমান্ড এক্সপ্লোরার</button>
+            <button onclick="navigate('permissions')" id="btn-permissions" class="tab-btn text-left px-4 py-3 rounded-lg font-semibold transition whitespace-nowrap md:whitespace-normal border border-gray-200 hover:bg-gray-100 text-gray-700">🔒 ফাইল পারমিশন</button>
+            <button onclick="navigate('quiz')" id="btn-quiz" class="tab-btn text-left px-4 py-3 rounded-lg font-semibold transition whitespace-nowrap md:whitespace-normal border border-gray-200 hover:bg-gray-100 text-gray-700">📝 পরীক্ষার প্রস্তুতি</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 p-6 md:p-10 max-w-6xl mx-auto w-full">
+        
+        <section id="sec-overview" class="block">
+            <div class="bg-white rounded-xl shadow-sm p-6 md:p-8 mb-8 border border-gray-100">
+                <h2 class="text-3xl font-bold mb-4 text-gray-800">স্বাগতম ছাত্র-ছাত্রীরা!</h2>
+                <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                    উইন্ডোজ অপারেটিং সিস্টেমে আমরা সাধারণত মাউস দিয়ে ক্লিক করে কাজ করি (যাকে বলা হয় <strong>GUI</strong>)। কিন্তু লীনাক্স (LINUX) অপারেটিং সিস্টেমে কিবোর্ড দিয়ে লিখে কাজ করার ক্ষমতা অনেক বেশি গুরুত্বপূর্ণ। একে বলা হয় <strong>CLI (Command Line Interface)</strong>। 
+                </p>
+                <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                    যে কালো উইন্ডোতে কমান্ড লেখা হয়, তাকে বলা হয় <strong>টার্মিনাল (Terminal)</strong>। কমান্ড শুরু করার আগে দুটি জিনিস জানতে হবে:
+                </p>
+                <div class="grid md:grid-cols-2 gap-4 mt-6">
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <h3 class="font-bold text-blue-800 text-xl mb-2">📁 ডিরেক্টরি (Directory)</h3>
+                        <p class="text-blue-900">উইন্ডোজ কম্পিউটারে আমরা যাকে 'ফোল্ডার' বলি, লীনাক্সে তাকেই 'ডিরেক্টরি' বলা হয়।</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                        <h3 class="font-bold text-green-800 text-xl mb-2"> / রুট (Root Directory)</h3>
+                        <p class="text-green-900">লীনাক্সের সমস্ত ফাইল যে প্রধান ডিরেক্টরির ভেতরে থাকে, তাকে রুট ডিরেক্টরি (/) বলে।</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 md:p-8 border border-gray-100">
+                <h3 class="text-2xl font-bold mb-6 text-gray-800 text-center">সিলেবাসের কমান্ড সমূহের বিভাজন</h3>
+                <p class="text-center text-gray-600 mb-6">এই গ্রাফটি আমাদের সিলেবাসে থাকা বিভিন্ন ধরণের কমান্ডের সংখ্যা দেখাচ্ছে।</p>
+                <div class="chart-container">
+                    <canvas id="commandChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-explorer" class="hidden">
+            <div class="mb-6">
+                <h2 class="text-3xl font-bold mb-2 text-gray-800">কমান্ড এক্সপ্লোরার</h2>
+                <p class="text-gray-600">কমান্ডের নামের ওপর ক্লিক করে তার কাজ এবং টার্মিনালের উদাহরণ নিচে দেখো।</p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[600px]">
+                    <div class="p-4 bg-gray-50 border-b border-gray-200 font-bold text-gray-700">কমান্ডের তালিকা</div>
+                    <div class="overflow-y-auto p-2" id="command-list-container">
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 flex flex-col gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 id="cmd-title" class="text-3xl font-bold text-gray-800 mb-2">কমান্ড নির্বাচন করো</h3>
+                        <div id="cmd-category" class="inline-block px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold mb-4">ক্যাটাগরি</div>
+                        <p id="cmd-desc" class="text-lg text-gray-700 mb-4 leading-relaxed">বাম দিকের তালিকা থেকে একটি কমান্ড সিলেক্ট করলে এখানে তার বিস্তারিত কাজ দেখানো হবে।</p>
+                        <div id="cmd-flags-container" class="hidden bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4">
+                            <h4 class="font-bold text-yellow-800 mb-2">গুরুত্বপূর্ণ অপশন (Flags):</h4>
+                            <ul id="cmd-flags" class="list-disc list-inside text-yellow-900 space-y-1"></ul>
+                        </div>
+                    </div>
+
+                    <div class="terminal-bg rounded-xl shadow-lg p-4 h-64 flex flex-col relative overflow-hidden">
+                        <div class="flex items-center gap-2 mb-3 border-b border-gray-600 pb-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="text-gray-400 text-sm ml-2 font-sans">student@linux-terminal: ~</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto font-mono text-sm leading-relaxed whitespace-pre-wrap" id="cmd-terminal">
+$ <!-- Terminal output will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-permissions" class="hidden">
+            <div class="bg-white rounded-xl shadow-sm p-6 md:p-8 mb-8 border border-gray-100">
+                <h2 class="text-3xl font-bold mb-4 text-gray-800">ফাইল পারমিশন (chmod)</h2>
+                <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                    লীনাক্স একটি অত্যন্ত সুরক্ষিত সিস্টেম। এখানে প্রতিটি ফাইলের ওপর তিনজন ব্যবহারকারীর অধিকার বা পারমিশন থাকে। <code class="bg-gray-100 px-2 py-1 rounded text-red-600">chmod</code> কমান্ড ব্যবহার করে এই পারমিশন পরিবর্তন করা যায়।
+                </p>
+
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white border-2 border-indigo-100 rounded-xl p-6 text-center hover:border-indigo-300 transition shadow-sm">
+                        <div class="text-4xl mb-3">👤</div>
+                        <h3 class="text-xl font-bold text-indigo-800 mb-2">User (u)</h3>
+                        <p class="text-gray-600">ফাইলের আসল মালিক বা Owner।</p>
+                    </div>
+                    <div class="bg-white border-2 border-teal-100 rounded-xl p-6 text-center hover:border-teal-300 transition shadow-sm">
+                        <div class="text-4xl mb-3">👥</div>
+                        <h3 class="text-xl font-bold text-teal-800 mb-2">Group (g)</h3>
+                        <p class="text-gray-600">নির্দিষ্ট ব্যবহারকারীদের দল।</p>
+                    </div>
+                    <div class="bg-white border-2 border-orange-100 rounded-xl p-6 text-center hover:border-orange-300 transition shadow-sm">
+                        <div class="text-4xl mb-3">🌍</div>
+                        <h3 class="text-xl font-bold text-orange-800 mb-2">Others (o)</h3>
+                        <p class="text-gray-600">বাকি অন্য সকল সাধারণ ব্যবহারকারী।</p>
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold mb-4 text-gray-800 text-center">৩ ধরণের পারমিশন</h3>
+                <div class="flex flex-col md:flex-row justify-center gap-4 mb-8">
+                    <div class="bg-green-100 text-green-800 px-6 py-3 rounded-lg font-bold text-center border border-green-200">Read (r) <br><span class="text-sm font-normal">পড়ার ক্ষমতা</span></div>
+                    <div class="bg-yellow-100 text-yellow-800 px-6 py-3 rounded-lg font-bold text-center border border-yellow-200">Write (w) <br><span class="text-sm font-normal">পরিবর্তন করার ক্ষমতা</span></div>
+                    <div class="bg-red-100 text-red-800 px-6 py-3 rounded-lg font-bold text-center border border-red-200">Execute (x) <br><span class="text-sm font-normal">রান করার ক্ষমতা</span></div>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                    <h4 class="font-bold text-gray-800 mb-2 text-lg">উদাহরণ:</h4>
+                    <p class="text-gray-700 mb-3">"exam.txt" ফাইলে অন্য ব্যবহারকারীদের (others) পড়ার অনুমতি (Read Permission) যোগ করতে:</p>
+                    <div class="bg-gray-800 text-green-400 font-mono p-4 rounded-lg shadow-inner">
+                        $ chmod o+r exam.txt
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2 text-center">এখানে <strong class="text-gray-700">o</strong> = Others, <strong class="text-gray-700">+</strong> = অনুমতি দেওয়া, এবং <strong class="text-gray-700">r</strong> = Read</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-quiz" class="hidden">
+            <div class="mb-6">
+                <h2 class="text-3xl font-bold mb-2 text-gray-800">পরীক্ষার প্রস্তুতি (Sample Questions)</h2>
+                <p class="text-gray-600">নিচের প্রশ্নগুলোতে ক্লিক করে উত্তরগুলো মিলিয়ে নাও। এটি তোমার রিভিশনের জন্য সহায়ক হবে।</p>
+            </div>
+
+            <div class="space-y-4" id="quiz-container">
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const commandsData = [
+            { id: 'pwd', cat: 'ফাইল ম্যানেজমেন্ট', name: 'pwd', short: 'বর্তমান ডিরেক্টরির পথ দেখায়', desc: 'তুমি বর্তমানে ঠিক কোন ডিরেক্টরি বা ফোল্ডারের ভেতরে কাজ করছ (বর্তমান অবস্থান), তা স্ক্রিনে দেখানোর জন্য এই কমান্ড ব্যবহার করা হয়।', terminal: '$ pwd\n/home/student/documents', flags: [] },
+            { id: 'ls', cat: 'ফাইল ম্যানেজমেন্ট', name: 'ls', short: 'ফাইলের তালিকা দেখায়', desc: 'বর্তমান ডিরেক্টরির ভেতরে কী কী ফাইল বা ফোল্ডার (সাব-ডিরেক্টরি) আছে, তার একটি তালিকা দেখায়।', terminal: '$ ls\nnotes.txt   project/   images/', flags: ['ls -l : বিস্তারিত তালিকা দেখায় (Long listing)।', 'ls -a : লুকানো ফাইলসহ (hidden files) সব ফাইল দেখায়।'] },
+            { id: 'cd', cat: 'ফাইল ম্যানেজমেন্ট', name: 'cd', short: 'ডিরেক্টরি পরিবর্তন করে', desc: 'এক ফোল্ডার থেকে অন্য ফোল্ডারে যাওয়ার জন্য (ডিরেক্টরি পরিবর্তন করতে) এটি ব্যবহার করা হয়।', terminal: '$ cd project\nstudent@linux:~/project$\n\n$ cd ..\nstudent@linux:~$\n\n$ cd ~\nstudent@linux:~$', flags: [] },
+            { id: 'mkdir', cat: 'ফাইল ম্যানেজমেন্ট', name: 'mkdir', short: 'নতুন ফোল্ডার তৈরি করে', desc: 'নতুন ডিরেক্টরি বা ফোল্ডার তৈরি করার জন্য এই কমান্ড ব্যবহৃত হয়।', terminal: '$ mkdir Computer\n$ ls\nComputer/', flags: [] },
+            { id: 'rmdir', cat: 'ফাইল ম্যানেজমেন্ট', name: 'rmdir', short: 'ফাঁকা ফোল্ডার মুছে ফেলে', desc: 'কোনো ফাঁকা ডিরেক্টরি বা ফোল্ডার মুছে ফেলার (Delete) জন্য এটি ব্যবহার করা হয়।', terminal: '$ rmdir Computer', flags: [] },
+            { id: 'touch', cat: 'ফাইল ম্যানেজমেন্ট', name: 'touch', short: 'খালি নতুন ফাইল তৈরি করে', desc: 'কোনো লেখা ছাড়া সম্পূর্ণ নতুন এবং খালি (Empty) ফাইল তৈরি করতে এই কমান্ড ব্যবহার করা হয়।', terminal: '$ touch exam.txt\n$ ls\nexam.txt', flags: [] },
+            { id: 'cp', cat: 'ফাইল ম্যানেজমেন্ট', name: 'cp', short: 'ফাইল কপি করে', desc: 'কোনো ফাইল বা ডিরেক্টরিকে এক জায়গা থেকে অন্য জায়গায় কপি (নকল) করার জন্য ব্যবহৃত হয়। সিনট্যাক্স: cp [উৎস] [গন্তব্য]', terminal: '$ cp exam.txt exam_backup.txt', flags: [] },
+            { id: 'mv', cat: 'ফাইল ম্যানেজমেন্ট', name: 'mv', short: 'ফাইল স্থানান্তর বা নাম পরিবর্তন', desc: 'কোনো ফাইলকে স্থানান্তর বা মুভ করা (Cut-Paste) অথবা ফাইলের নাম পরিবর্তন (Rename) করার জন্য ব্যবহৃত হয়।', terminal: '$ mv exam.txt test.txt\n\n$ mv test.txt project/', flags: [] },
+            { id: 'rm', cat: 'ফাইল ম্যানেজমেন্ট', name: 'rm', short: 'ফাইল ডিলিট করে', desc: 'ফাইল মুছে ফেলার জন্য ব্যবহৃত হয়। লীনাক্সে rm দিয়ে ডিলিট করলে তা চিরতরে মুছে যায়।', terminal: '$ rm test.txt', flags: ['rm -r [ডিরেক্টরির নাম] : ফোল্ডারের ভেতর ফাইল থাকা অবস্থায় পুরো ফোল্ডার একসাথে ডিলিট করে।'] },
+            { id: 'cat', cat: 'টেক্সট প্রসেসিং', name: 'cat', short: 'ফাইলের লেখা দেখায়', desc: 'কোনো ফাইলের ভেতরে কী লেখা আছে তা স্ক্রিনে সরাসরি দেখার জন্য এবং নতুন ফাইলে লেখা যোগ করতে এটি ব্যবহার করা হয়।', terminal: '$ cat notes.txt\nLinux is an OS.\n\n$ cat > bio.txt\nHello, I am a Linux user.\n^D', flags: [] },
+            { id: 'head', cat: 'টেক্সট প্রসেসিং', name: 'head', short: 'প্রথম দিকের লাইন দেখায়', desc: 'কোনো বড় ফাইলের প্রথম দিকের কয়েকটি লাইন স্ক্রিনে দেখানোর জন্য ব্যবহৃত হয়।', terminal: '$ head -n 5 notes.txt\nLine 1\nLine 2\nLine 3\nLine 4\nLine 5', flags: [] },
+            { id: 'tail', cat: 'টেক্সট প্রসেসিং', name: 'tail', short: 'শেষ দিকের লাইন দেখায়', desc: 'কোনো ফাইলের শেষ দিকের কয়েকটি লাইন দেখার জন্য ব্যবহৃত হয়।', terminal: '$ tail -n 3 notes.txt\nLine 98\nLine 99\nLine 100', flags: [] },
+            { id: 'grep', cat: 'টেক্সট প্রসেসিং', name: 'grep', short: 'নির্দিষ্ট শব্দ খোঁজে', desc: 'কোনো ফাইলের ভেতরে থাকা লেখার মধ্য থেকে নির্দিষ্ট কোনো শব্দ (Keyword) খুঁজে বের করার জন্য এটি ব্যবহার করা হয়।', terminal: '$ grep "computer" notes.txt\nA computer is a machine.', flags: [] },
+            { id: 'whoami', cat: 'সিস্টেম কমান্ড', name: 'whoami', short: 'বর্তমান ইউজারের নাম জানায়', desc: 'বর্তমানে কোন ইউজার বা ব্যবহারকারী লগ-ইন করে সিস্টেমে কাজ করছে, তার নাম দেখায়।', terminal: '$ whoami\nstudent', flags: [] },
+            { id: 'clear', cat: 'সিস্টেম কমান্ড', name: 'clear', short: 'স্ক্রিন পরিষ্কার করে', desc: 'টার্মিনাল স্ক্রিন লেখায় ভরে গেলে, স্ক্রিনটি পরিষ্কার করার জন্য এটি ব্যবহার করা হয়।', terminal: '$ clear', flags: [] },
+            { id: 'date', cat: 'সিস্টেম কমান্ড', name: 'date', short: 'তারিখ ও সময় দেখায়', desc: 'সিস্টেমের বর্তমান তারিখ ও সময় দেখার জন্য ব্যবহৃত হয়।', terminal: '$ date\nFri Jun 19 20:56:00 IST 2026', flags: [] },
+            { id: 'cal', cat: 'সিস্টেম কমান্ড', name: 'cal', short: 'ক্যালেন্ডার দেখায়', desc: 'টার্মিনালের স্ক্রিনে ক্যালেন্ডার বা পঞ্জিকা দেখার জন্য এই কমান্ড ব্যবহার করা হয়।', terminal: '$ cal\n      June 2026       \nSu Mo Tu We Th Fr Sa  \n    1  2  3  4  5  6  \n 7  8  9 10 11 12 13  \n14 15 16 17 18 19 20  \n21 22 23 24 25 26 27  \n28 29 30              ', flags: [] },
+            { id: 'df', cat: 'সিস্টেম কমান্ড', name: 'df', short: 'ডিস্কের অবস্থা দেখায়', desc: 'কম্পিউটারের হার্ডডিস্কে কতটা জায়গা খালি আছে আর কতটা ভর্তি হয়েছে, তা দেখায়।', terminal: '$ df -h\nFilesystem      Size  Used Avail Use%\n/dev/sda1        50G   20G   30G  40%', flags: [] }
+        ];
+
+        const quizData = [
+            { q: "লীনাক্সে লুকানো ফাইল (Hidden Files) দেখতে কোন অপশন ব্যবহার করা হয়?", a: "লীনাক্সে হিডেন ফাইল দেখতে <strong>ls -a</strong> কমান্ড ব্যবহার করা হয়। এই ফাইলগুলির নামের আগে একটি ডট (.) চিহ্ন থাকে।" },
+            { q: "cat file1.txt > file2.txt - এই কমান্ডটি কী কাজ করে?", a: "এটি file1.txt ফাইলের সমস্ত লেখাকে কপি করে file2.txt ফাইলের মধ্যে পাঠিয়ে দেয় (একে আউটপুট রিডাইরেকশন বলা হয়)।" },
+            { q: "rm এবং rmdir কমান্ডের মধ্যে পার্থক্য কী?", a: "<strong>rm</strong> কমান্ড ফাইল ডিলিট করার জন্য ব্যবহৃত হয়। অপরদিকে, <strong>rmdir</strong> কমান্ড শুধুমাত্র সম্পূর্ণ ফাঁকা বা খালি ডিরেক্টরি (Directory) মুছে ফেলার জন্য ব্যবহৃত হয়।" },
+            { q: "কোনো ফাইলের নাম পরিবর্তন করতে কোন কমান্ড ব্যবহার করা হয়?", a: "কোনো ফাইলের নাম পরিবর্তন করতে <strong>mv (Move)</strong> কমান্ড ব্যবহার করা হয়।" }
+        ];
+
+        let chartInstance = null;
+
+        function navigate(sectionId) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById('sec-' + sectionId).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-gray-700', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+            const activeBtn = document.getElementById('btn-' + sectionId);
+            activeBtn.classList.remove('bg-white', 'text-gray-700');
+            activeBtn.classList.add('active');
+
+            if(sectionId === 'overview' && !chartInstance) {
+                initChart();
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('commandChart').getContext('2d');
+            
+            const categoryCounts = {
+                'ফাইল ম্যানেজমেন্ট': 9,
+                'টেক্সট প্রসেসিং': 4,
+                'সিস্টেম কমান্ড': 5,
+                'পারমিশন': 1
+            };
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryCounts),
+                    datasets: [{
+                        data: Object.values(categoryCounts),
+                        backgroundColor: ['#4A90E2', '#50E3C2', '#F5A623', '#D0021B'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: "'Noto Sans Bengali', sans-serif" } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ' + context.raw + ' টি কমান্ড';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCommandList() {
+            const container = document.getElementById('command-list-container');
+            container.innerHTML = '';
+            
+            let currentCat = '';
+            commandsData.forEach(cmd => {
+                if (cmd.cat !== currentCat) {
+                    currentCat = cmd.cat;
+                    const catHeader = document.createElement('div');
+                    catHeader.className = 'text-xs font-bold text-gray-500 uppercase tracking-wider mt-4 mb-2 px-3';
+                    catHeader.textContent = currentCat;
+                    container.appendChild(catHeader);
+                }
+
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left px-4 py-3 mb-1 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 transition flex justify-between items-center text-gray-700 font-mono text-sm border border-transparent hover:border-indigo-100';
+                btn.innerHTML = `<span class="font-bold text-base">${cmd.name}</span> <span class="text-xs text-gray-400 font-sans hidden sm:inline-block">${cmd.short}</span>`;
+                btn.onclick = () => showCommandDetails(cmd);
+                container.appendChild(btn);
+            });
+        }
+
+        function showCommandDetails(cmd) {
+            document.getElementById('cmd-title').textContent = cmd.name;
+            document.getElementById('cmd-category').textContent = cmd.cat;
+            document.getElementById('cmd-desc').textContent = cmd.desc;
+            
+            const flagsContainer = document.getElementById('cmd-flags-container');
+            const flagsList = document.getElementById('cmd-flags');
+            
+            if (cmd.flags && cmd.flags.length > 0) {
+                flagsContainer.classList.remove('hidden');
+                flagsList.innerHTML = cmd.flags.map(f => `<li>${f}</li>`).join('');
+            } else {
+                flagsContainer.classList.add('hidden');
+            }
+
+            const terminal = document.getElementById('cmd-terminal');
+            terminal.innerHTML = '';
+            
+            // Typewriter effect for terminal
+            let i = 0;
+            const text = cmd.terminal;
+            terminal.textContent = '';
+            
+            function typeWriter() {
+                if (i < text.length) {
+                    terminal.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 15);
+                }
+            }
+            typeWriter();
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            quizData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition';
+                
+                card.innerHTML = `
+                    <div class="p-5 flex justify-between items-center bg-gray-50" onclick="toggleQuiz(${index})">
+                        <h4 class="font-bold text-gray-800 text-lg flex items-start gap-3">
+                            <span class="bg-indigo-100 text-indigo-800 rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">Q${index + 1}</span>
+                            <span>${q.q}</span>
+                        </h4>
+                        <span class="text-2xl text-gray-400 select-none transform transition-transform" id="icon-${index}">+</span>
+                    </div>
+                    <div class="p-5 border-t border-gray-100 bg-white reveal-ans text-gray-700 text-lg leading-relaxed" id="ans-${index}">
+                        <strong class="text-green-600">উত্তর:</strong> ${q.a}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleQuiz(index) {
+            const ansDiv = document.getElementById(`ans-${index}`);
+            const icon = document.getElementById(`icon-${index}`);
+            
+            if (ansDiv.classList.contains('show')) {
+                ansDiv.classList.remove('show');
+                icon.textContent = '+';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                ansDiv.classList.add('show');
+                icon.textContent = '−';
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Initialize application
+        window.onload = () => {
+            initChart();
+            renderCommandList();
+            renderQuiz();
+            
+            // Show details for the first command by default to populate the UI
+            showCommandDetails(commandsData[0]);
+        };
+    </script>
+</body>
+</html>
